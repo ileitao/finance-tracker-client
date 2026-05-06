@@ -83,7 +83,9 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Transactions */}
         <AddTransactionForm />
+
         {/* Chart */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <h2 className="text-sm font-medium text-gray-700 mb-6">
