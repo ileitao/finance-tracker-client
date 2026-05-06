@@ -1,73 +1,169 @@
-# React + TypeScript + Vite
+# Finance Tracker — Client
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A personal finance dashboard built with React, TypeScript, and Tailwind CSS. Connects to the [Finance Tracker API](https://github.com/ileitao/finance-tracker) to track income, expenses, and spending by category.
 
-Currently, two official plugins are available:
+**Live demo:** [https://finance-tracker-client-six.vercel.app/dashboard](https://finance-tracker-client-six.vercel.app/dashboard)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+![Dashboard preview]()
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Features
 
-## Expanding the ESLint configuration
+- Register and login with JWT authentication
+- Add income and expense transactions
+- Dashboard with real-time summary cards — total income, expenses, and balance
+- Bar chart showing spending breakdown by category
+- Transaction list with amount, category, and date
+- Protected routes — unauthenticated users are redirected to login
+- Auto-login after registration
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Tech Stack
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- **Framework** — React 18 + TypeScript
+- **Build tool** — Vite
+- **Routing** — React Router v6
+- **Data fetching** — TanStack Query
+- **HTTP client** — Axios
+- **Charts** — Recharts
+- **Styling** — Tailwind CSS v4
+- **Deployment** — Vercel
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+## Project Structure
+
+```
+finance-tracker-client/
+├── src/
+│   ├── api/
+│   │   └── client.ts         # Axios instance with JWT interceptor
+│   ├── components/
+│   │   ├── Navbar.tsx         # Top navigation with logout
+│   │   └── AddTransactionForm.tsx  # Form to create transactions
+│   ├── context/
+│   │   └── AuthContext.tsx    # Auth state — token, login, logout
+│   ├── pages/
+│   │   ├── Login.tsx          # Login page
+│   │   ├── Register.tsx       # Register page
+│   │   └── Dashboard.tsx      # Main dashboard
+│   ├── App.tsx                # Routes and protected route logic
+│   └── main.tsx               # App entry point with providers
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Local Setup
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Prerequisites
+
+- Node.js 18+
+- The [Finance Tracker API](https://github.com/ileitao/finance-tracker) running locally or deployed
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/ileitao/finance-tracker-client.git
+cd finance-tracker-client
 ```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure environment variables
+
+Create a `.env` file at the project root:
+
+```env
+VITE_API_URL=http://localhost:3000
+```
+
+For production point this at your Railway API URL:
+
+```env
+VITE_API_URL=https://your-api.up.railway.app
+```
+
+### 4. Start the development server
+
+```bash
+npm run dev
+```
+
+The app will be available at `http://localhost:5173`.
+
+---
+
+## Architecture Notes
+
+**Auth flow**
+
+The app uses JWT tokens stored in `localStorage`. On login, the token is saved and attached to every subsequent API request via an Axios interceptor:
+
+```ts
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+```
+
+This means no component needs to manually attach the token — it's handled globally.
+
+**Auth context**
+
+`AuthContext` provides `token`, `login()`, `logout()`, and `isAuthenticated` to the entire component tree. State is initialized from `localStorage` so the user stays logged in across page refreshes.
+
+**Protected routes**
+
+The `ProtectedRoute` component wraps any route that requires authentication. Unauthenticated users are redirected to `/login`:
+
+```tsx
+function ProtectedRoute({ children }) {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+}
+```
+
+**Data fetching with TanStack Query**
+
+`useQuery` handles all GET requests with automatic caching and loading states. `useMutation` handles POST requests — after a successful transaction creation, `invalidateQueries` triggers a refetch of both `transactions` and `summary`, updating the dashboard instantly without a page refresh.
+
+---
+
+## Deployment (Vercel)
+
+The app is deployed to Vercel and connects to the Finance Tracker API on Railway.
+
+### Deploy your own
+
+1. Push the repo to GitHub
+2. Go to [vercel.com](https://vercel.com) and import the repository
+3. Add the environment variable:
+   - `VITE_API_URL` = your Railway API URL
+4. Click Deploy
+
+Vercel automatically redeploys on every push to `main`.
+
+---
+
+## Scripts
+
+```bash
+npm run dev      # start development server
+npm run build    # build for production
+npm run preview  # preview production build locally
+```
+
+---
+
+## Related
+
+- [Finance Tracker API](https://github.com/ileitao/finance-tracker) — the backend this app connects to
