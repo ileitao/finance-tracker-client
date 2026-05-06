@@ -108,11 +108,12 @@ export default function Dashboard() {
                   tickLine={false}
                 />
                 <Tooltip
-                  formatter={(value: number) => [
-                    `$${value.toFixed(2)}`,
+                  formatter={(value) => [
+                    `$${Number(value ?? 0).toFixed(2)}`,
                     'Amount',
                   ]}
                 />
+
                 <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
                   {chartData.map((entry, index) => (
                     <Cell
