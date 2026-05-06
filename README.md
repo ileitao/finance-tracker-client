@@ -4,8 +4,8 @@ A personal finance dashboard built with React, TypeScript, and Tailwind CSS. Con
 
 **Live demo:** [https://finance-tracker-client-six.vercel.app/dashboard](https://finance-tracker-client-six.vercel.app/dashboard)
 
-![Dashboard preview](<img width="1792" height="1032" alt="Screenshot 2026-05-06 at 4 36 09 PM" src="https://github.com/user-attachments/assets/44adb549-cf24-46b0-ab97-f403567f2991" />
-)
+<img width="1792" height="1032" alt="Screenshot 2026-05-06 at 4 36 09 PM" src="https://github.com/user-attachments/assets/bda6da71-b32e-4adb-9214-ff3a11282c86" />
+
 
 ---
 
