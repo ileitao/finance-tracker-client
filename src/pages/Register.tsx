@@ -19,8 +19,8 @@ export default function Register() {
     try {
       await api.post('/register', { email, password });
       // auto login after register
-      const response = await api.post('/login', { email, password });
-      login(response.data.token);
+      await api.post('/login', { email, password });
+      await login();
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Something went wrong');

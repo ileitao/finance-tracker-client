@@ -11,7 +11,7 @@ A personal finance dashboard built with React, TypeScript, and Tailwind CSS. Con
 
 ## Features
 
-- Register and login with JWT authentication
+- Register and login with cookie-based session authentication
 - Add income and expense transactions
 - Dashboard with real-time summary cards — total income, expenses, and balance
 - Bar chart showing spending breakdown by category
@@ -40,12 +40,12 @@ A personal finance dashboard built with React, TypeScript, and Tailwind CSS. Con
 finance-tracker-client/
 ├── src/
 │   ├── api/
-│   │   └── client.ts         # Axios instance with JWT interceptor
+│   │   └── client.ts         # Axios instance, sends credentials (session cookie)
 │   ├── components/
 │   │   ├── Navbar.tsx         # Top navigation with logout
 │   │   └── AddTransactionForm.tsx  # Form to create transactions
 │   ├── context/
-│   │   └── AuthContext.tsx    # Auth state — token, login, logout
+│   │   └── AuthContext.tsx    # Auth state — user, login, logout, isLoadingLoggedUser
 │   ├── pages/
 │   │   ├── Login.tsx          # Login page
 │   │   ├── Register.tsx       # Register page
@@ -104,31 +104,30 @@ The app will be available at `http://localhost:5173`.
 
 **Auth flow**
 
-The app uses JWT tokens stored in `localStorage`. On login, the token is saved and attached to every subsequent API request via an Axios interceptor:
+The app uses a server-side session stored in an HTTP-only cookie rather than a token in `localStorage`. The Axios instance sends credentials on every request so the browser attaches the cookie automatically:
 
 ```ts
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
 });
 ```
 
-This means no component needs to manually attach the token — it's handled globally.
+On login/register, the API sets the session cookie and the client then calls `GET /me` to fetch the logged-in user. No token handling is needed on the client at all.
 
 **Auth context**
 
-`AuthContext` provides `token`, `login()`, `logout()`, and `isAuthenticated` to the entire component tree. State is initialized from `localStorage` so the user stays logged in across page refreshes.
+`AuthContext` provides `user`, `login()`, `logout()`, `isAuthenticated`, and `isLoadingLoggedUser` to the entire component tree. On mount it calls `GET /me` to check for an existing session (so the user stays logged in across page refreshes), setting `isLoadingLoggedUser` while that check is in flight. `login()` re-fetches `/me` after a successful `POST /login`, and `logout()` calls `POST /logout` to clear the session on the server.
 
 **Protected routes**
 
-The `ProtectedRoute` component wraps any route that requires authentication. Unauthenticated users are redirected to `/login`:
+The `ProtectedRoute` component wraps any route that requires authentication. While the initial session check is in flight it renders a loading state; unauthenticated users are redirected to `/login`:
 
 ```tsx
 function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoadingLoggedUser } = useAuth();
+
+  if (isLoadingLoggedUser) return <>Loading...</>;
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 }
 ```

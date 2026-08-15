@@ -1,36 +1,76 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from 'react';
+import api from '../api/client';
 
 interface AuthContextType {
-  token: string | null;
-  login: (token: string) => void;
+  user: {
+    id: string;
+    email: string;
+  } | null;
+  login: () => void;
   logout: () => void;
   isAuthenticated: boolean;
+  isLoadingLoggedUser: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(
-    localStorage.getItem('token'),
-  );
+  const [loggedUser, setLoggedUser] = useState<{
+    id: string;
+    email: string;
+  } | null>(null);
+  const [isLoadingLoggedUser, setIsLoadingLoggedUser] = useState(true);
 
-  const login = (newToken: string) => {
-    localStorage.setItem('token', newToken);
-    setToken(newToken);
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoadingLoggedUser(true);
+        const response = await api.get('/me');
+        const { id, email } = response.data;
+        setLoggedUser({ id, email });
+        setIsLoadingLoggedUser(false);
+      } catch (err: any) {
+        setLoggedUser(null);
+        setIsLoadingLoggedUser(false);
+      }
+    };
+    loadData();
+  }, []);
+
+  const login = async () => {
+    try {
+      setIsLoadingLoggedUser(true);
+      const response = await api.get('/me');
+      const { id, email } = response.data;
+      setLoggedUser({ id, email });
+      setIsLoadingLoggedUser(false);
+    } catch (err: any) {
+      setLoggedUser(null);
+      setIsLoadingLoggedUser(false);
+    }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
+  const logout = async () => {
+    setIsLoadingLoggedUser(true);
+    await api.post('/logout');
+    setLoggedUser(null);
+    setIsLoadingLoggedUser(false);
   };
 
   return (
     <AuthContext.Provider
       value={{
-        token,
+        user: loggedUser,
         login,
         logout,
-        isAuthenticated: !!token,
+        isAuthenticated: !!loggedUser,
+        isLoadingLoggedUser,
       }}
     >
       {children}

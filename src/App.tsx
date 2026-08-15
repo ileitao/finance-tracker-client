@@ -5,7 +5,9 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoadingLoggedUser } = useAuth();
+
+  if (isLoadingLoggedUser) return <>Loading...</>;
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 }
 
